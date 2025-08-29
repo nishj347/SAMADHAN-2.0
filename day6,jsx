@@ -1,0 +1,40 @@
+import React from "react";
+
+function ProfileCard(props) {
+  const { name, role, avatar, bio } = props;
+
+  return (
+    <div className="bg-white border rounded-xl shadow p-5 max-w-xs">
+      <img
+        src={avatar || "https://via.placeholder.com/120"}
+        alt={name}
+        className="w-24 h-24 object-cover rounded-full mx-auto"
+      />
+      <div className="mt-4 text-center">
+        <h2 className="text-lg font-bold">{name}</h2>
+        <p className="text-gray-500 text-sm">{role}</p>
+        <p className="text-gray-600 text-sm mt-2">{bio}</p>
+      </div>
+    </div>
+  );
+}
+
+
+
+//App.jsx
+import ProfileCard from "./components/ProfileCard";
+
+export default function App() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <ProfileCard
+        name="Nissie Jain"
+        role="Software Developer"
+        avatar="https://via.placeholder.com/150"
+        bio="Enjoys solving problems, loves calm chase, and always curious to learn new things."
+      />
+    </div>
+  );
+}
+
+
