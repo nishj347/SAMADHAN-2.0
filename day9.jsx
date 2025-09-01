@@ -1,107 +1,124 @@
-import React, { useState } from "react";
+(backend)
+const express = require("express");
+const cors = require("cors");
 
-export default function TodoList() {
-  const [task, setTask] = useState(""); // current input value
-  const [todos, setTodos] = useState([]); // list of tasks with status
-  const [filter, setFilter] = useState("all"); // filter state
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-  // handle input change
+// Fake student data (in-memory)
+let students = [
+  { id: 1, name: "Dhara Jain", roll: "101", dept: "CSE" },
+  { id: 2, name: "Rahul Verma", roll: "102", dept: "ECE" },
+  { id: 3, name: "Sneha Patel", roll: "103", dept: "ME" },
+];
+
+// GET all students
+app.get("/students", (req, res) => {
+  res.json(students);
+});
+
+// Add new student
+app.post("/students", (req, res) => {
+  const { name, roll, dept } = req.body;
+  const newStudent = { id: students.length + 1, name, roll, dept };
+  students.push(newStudent);
+  res.json(newStudent);
+});
+
+// Server listen
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+(frontend)
+import React, { useState, useEffect } from "react";
+
+export default function StudentDirectory() {
+  const [students, setStudents] = useState([]);
+  const [form, setForm] = useState({ name: "", roll: "", dept: "" });
+
+  // Fetch students when component mounts
+  useEffect(() => {
+    fetch("http://localhost:5000/students")
+      .then((res) => res.json())
+      .then((data) => setStudents(data))
+      .catch((err) => console.error("Error fetching students:", err));
+  }, []);
+
+  // Handle input changes
   const handleChange = (e) => {
-    setTask(e.target.value);
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // add new task
-  const addTask = () => {
-    if (task.trim() === "") return; // avoid empty input
-    setTodos([...todos, { text: task, completed: false }]);
-    setTask(""); // reset input after adding
+  // Handle form submit
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    fetch("http://localhost:5000/students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then((res) => res.json())
+      .then((newStudent) => {
+        setStudents([...students, newStudent]); // update state
+        setForm({ name: "", roll: "", dept: "" }); // reset form
+      });
   };
-
-  // delete a task by index
-  const deleteTask = (index) => {
-    setTodos(todos.filter((_, i) => i !== index));
-  };
-
-  // toggle completed status
-  const toggleComplete = (index) => {
-    setTodos(
-      todos.map((todo, i) =>
-        i === index ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
-  };
-
-  // clear all completed tasks
-  const clearCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed));
-  };
-
-  // filter tasks based on filter state
-  const filteredTodos = todos.filter((todo) => {
-    if (filter === "active") return !todo.completed;
-    if (filter === "completed") return todo.completed;
-    return true; // all
-  });
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>To-Do List</h2>
+    <div style={{ padding: "20px" }}>
+      <h2>📘 Student Directory</h2>
 
-      {/* input field */}
-      <input
-        type="text"
-        value={task}
-        onChange={handleChange}
-        placeholder="Enter a task"
-        style={{ padding: "8px", marginRight: "10px" }}
-      />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="roll"
+          placeholder="Roll Number"
+          value={form.roll}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="dept"
+          placeholder="Department"
+          value={form.dept}
+          onChange={handleChange}
+          required
+        />
+        <button type="submit">Add Student</button>
+      </form>
 
-      {/* add button */}
-      <button onClick={addTask} style={{ padding: "8px" }}>
-        Add
-      </button>
-
-      {/* filter buttons */}
-      <div style={{ marginTop: "15px" }}>
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("active")} style={{ marginLeft: "5px" }}>
-          Active
-        </button>
-        <button
-          onClick={() => setFilter("completed")}
-          style={{ marginLeft: "5px" }}
-        >
-          Completed
-        </button>
-      </div>
-
-      {/* clear completed button */}
-      <div style={{ marginTop: "10px" }}>
-        <button onClick={clearCompleted}>Clear Completed</button>
-      </div>
-
-      {/* render list */}
+      <h3>Student List</h3>
       <ul>
-        {filteredTodos.map((todo, index) => (
-          <li key={index} style={{ marginTop: "8px" }}>
-            <span
-              onClick={() => toggleComplete(index)}
-              style={{
-                textDecoration: todo.completed ? "line-through" : "none",
-                cursor: "pointer",
-              }}
-            >
-              {todo.text}
-            </span>
-            <button
-              onClick={() => deleteTask(index)}
-              style={{ marginLeft: "10px" }}
-            >
-              Delete
-            </button>
+        {students.map((student) => (
+          <li key={student.id}>
+            {student.name} ({student.roll}) - {student.dept}
           </li>
         ))}
       </ul>
     </div>
   );
 }
+
+(app.jsx)
+import React from "react";
+import StudentDirectory from "./StudentDirectory";
+
+function App() {
+  return (
+    <div>
+      <StudentDirectory />
+    </div>
+  );
+}
+
+export default App;
