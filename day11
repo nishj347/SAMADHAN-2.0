@@ -1,0 +1,84 @@
+// server.js
+import express from "express";
+
+const app = express();
+const PORT =5000;
+
+// Middleware to parse JSON
+app.use(express.json());
+
+// In-memory "database"
+let students = [
+  { id: 1, name: "Aman Sharma", age: 21, course: "Computer Science" },
+  { id: 2, name: "Priya Mehta", age: 22, course: "Electronics" },
+];
+
+//CRUD Routes
+
+// GET students
+app.get("/students", (req, res) => {
+  res.json(students);
+});
+
+// GET single students
+app.get("/students/:id", (req, res) => {
+  const student = students.find((s) => s.id === parseInt(req.params.id));
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+  res.json(student);
+});
+
+// POST new student
+app.post("/students", (req, res) => {
+  const { name, age, course } = req.body;
+
+  if (!name || !age || !course) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const newStudent = {
+    id: students.length ? students[students.length - 1].id + 1 : 1,
+    name,
+    age,
+    course,
+  };
+
+  students.push(newStudent);
+  res.status(201).json(newStudent);
+});
+
+// PUT update student 
+app.put("/students/:id", (req, res) => {
+  const student = students.find((s) => s.id === parseInt(req.params.id));
+
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  const { name, age, course } = req.body;
+  student.name = name || student.name;
+  student.age = age || student.age;
+  student.course = course || student.course;
+
+  res.json(student);
+});
+
+// DELETE student 
+app.delete("/students/:id", (req, res) => {
+  const studentIndex = students.findIndex(
+    (s) => s.id === parseInt(req.params.id)
+  );
+
+  if (studentIndex === -1) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  const deletedStudent = students.splice(studentIndex, 1);
+  res.json({ message: "Student deleted successfully", deletedStudent });
+});
+
+// Server start
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
